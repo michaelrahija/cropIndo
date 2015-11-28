@@ -1,0 +1,162 @@
+---
+title: 'Monitoring listing - CROP: Indonesia'
+author: 'Michael Rahija, Global Strategy to Improve Agricultural and Rural Statistics'
+date:  "`r format(Sys.time(),'%B %d , %Y')`"
+output: pdf_document
+classoption: Landscape
+---
+
+# Daily Report, includes only interviews completed on the above-referenced date.
+
+```{r include=FALSE, cache=FALSE}
+##Set up
+
+library(dplyr)
+library(reshape)
+library(xlsx)
+library(ggplot2)
+library(ggmap)
+
+#Set working directory
+sys <- Sys.info()
+if(sys[5] == "x86_64"){
+    wdir = "~/Dropbox/CROP/Indonesia/cropIndo" #Mac
+    mdir = "~/Dropbox/CROP/Indonesia/simulated_data"
+    hhdir = "~/Dropbox/CROP/Indonesia/hh_coordinates"
+    sdir = "~/Dropbox/CROP/Indonesia/shape_files"
+  } else {
+    wdir = "C:/Users/rahija/Dropbox/Tanzania_Vet_Services_Project/Live_data_collection/Metadata_reporting/program"
+    mdir = "C:/Users/rahija/Dropbox/Tanzania_Vet_Services_Project/Live_data_collection/"
+  }
+
+  #set working directory
+  setwd(wdir)
+
+  #ID village files
+  files = list.files(mdir, pattern = "actions")
+
+  data.list <- list()
+
+  #Accumulate village data in a list
+  for (i in 1:length(files)){
+    data.temp <- read.delim(paste0(mdir,"/",files[i]), header = TRUE)
+  
+    data.list[[i]] <- data.temp 
+  }
+
+  #Merge list into one data frame
+  data <- do.call("rbind", data.list)
+
+  #keep only unique rows
+  data <- unique(data)
+
+# ### REMOVE PREVIOUSLY COMPLETED INTERVIEWS! ##  
+#   #filter for only interviews that were completed today
+#   data$Date <- as.character(data$Date)
+#   today <- format((Sys.Date()),"%m/%d/%Y")
+#   test <- data$Date %in% today
+#   data.today <- data[test,]
+
+```
+
+# Total physical structures listed
+```{r, echo=FALSE,fig.pos="placeHere"}
+source("R/interview_table.R")
+x <- interview_table(data)
+x <- x[,1:(length(x)-1)]
+length(x[,1])
+```
+
+
+# Team Summary Plot
+```{r, echo=FALSE,fig.pos="placeHere"}
+tab <- x %>%
+      group_by(Interviewer) %>% 
+      summarize(interviews = n())
+
+
+# source("R/summaryTable.R")
+# tab <- summaryTable(x)
+# colnames(tab) <- c("Team","Enumerators","Interviews")
+ggplot(tab, aes(x = Interviewer, y = interviews))+ 
+  geom_bar(stat = "identity") + 
+  labs(x = "Enumerators", y = "# of interviews completed", 
+       main = "Interviewer Summary")
+```
+
+
+# Interview Table 
+## Please remember to add 3 hours to start and end times as it is recorded in UTC time zone.
+```{r, echo=FALSE,fig.pos="placeHere"}
+source("R/interview_table.R")
+x <- interview_table(data)
+x <- x[,1:(length(x)-1)]
+knitr::kable(x,row.names = FALSE)
+```
+
+# Suspicious interviews
+## Below is a list of interviews whose duration is more than 1 standard deviation from the mean
+
+
+# Code for map creation
+```{r, echo=FALSE, message = FALSE, warning= FALSE, fig.height = 4, fig.width = 8, fig.cap = "Interview Locations", fig.pos="placeHere"}
+
+##The idea here is to create a map for each census block showing listed physical structures
+## Will need to figure out how to call map from ggmpa using the center of a polygon instead
+## of a country
+
+#get all georeferences
+geo <- list.files(mdir, pattern = "Household")
+test <- grepl(".tab",geo)
+geo <- geo[test]
+
+geo.list <- list()
+
+for (i in 1:length(geo)){
+    geo.temp <- read.delim(paste0(mdir,"/",geo[i]), header = TRUE)
+  
+    geo.list[[i]] <- geo.temp 
+  }
+
+#Merge list into one data frame
+geo<- do.call("rbind", geo.list)
+
+#keep only unique rows incase of duplicate
+geo <- unique(geo)
+
+#get ids
+
+ids <- list.files(hhdir)
+#ids <- gsub(".csv","",ids)
+
+#read in polygon
+# polys <- list.files(sdir) %in% ids  
+# polys <- list.files(sdir)[polys]
+
+for (i in 1:length(ids)){
+  poly <- read.csv(paste0(sdir,"/",ids[i]))
+  colnames(poly) <- c("lon","lat")
+
+  #read in hh
+  hh <- read.csv(paste0(hhdir,"/",ids[i]))
+  colnames(hh) <- c("lat","lon", "farmer_name")
+
+  #Get map, will need center. Could take the average lat, and long of the hh         coordinates to automate!
+  test2 <- get_map(location = c(lon = mean(hh$lon), lat = mean(hh$lat)), zoom = 17) 
+  test3 <- ggmap(test2)
+
+
+
+  #add households and polygon to map
+  test3 + 
+    geom_polygon(aes(x=lon, y=lat), fill='grey', size=.6,color='red', data=poly, alpha=0)+
+  geom_point(data = hh, aes(x = lon, y = lat, fill = "red", alpha = 0.8), size = 4, shape = 21, color = "red") +
+   guides(fill=FALSE, alpha=FALSE, size=FALSE) +
+    labs(x = "longitude", y = "latitude", main = "Map of Interviews") 
+}
+##LINK THE HH_COOR DATA W/ THE POLYGON!
+#IDEALLY A TABLE WITH COLUMN : ID, TYPE - c("Polygon","HH"), LAT,LONG
+     
+```
+
+

@@ -1,0 +1,20 @@
+		<Placemark>
+			<name>Point 2</name>
+			<description><![CDATA[description: AGRICULTURAL HOUSEHOLD]]></description>
+			<styleUrl>#icon-503-DB4436</styleUrl>
+			<ExtendedData>
+				<Data name='BS_ID_ST13'>
+					<value> BS_ID_ST13CODE
+</value>
+				</Data>
+				<Data name='Farmer Name'>
+					<value>FARMER_NAME
+</value>
+				</Data>
+			</ExtendedData>
+			<Point>
+				<coordinates>HH_COORDINATES,0.0</coordinates>
+			</Point>
+		</Placemark>
+		
+		

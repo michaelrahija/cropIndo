@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+	<Document>
+		<name>BS_Census blocks</name>
+		<Placemark>
+			<name>1</name>
+			<description><![CDATA[BS_ID_ST13: BS_ID_ST13CODE]]></description>
+			<styleUrl>#poly-00FFFF-0-0</styleUrl>
+			<ExtendedData>
+				<Data name='description'>
+					<value>description: BS_ID_ST13: BS_ID_ST13CODE</value>
+				</Data>
+				<Data name='BS_ID_ST13'>
+					<value>BS_ID_ST13CODE</value>
+				</Data>
+			</ExtendedData>
+			<Polygon>
+				<outerBoundaryIs>
+					<LinearRing>
+						<tessellate>1</tessellate>
+						<coordinates>POLYGONCOORDINATES</coordinates>
+					</LinearRing>
+				</outerBoundaryIs>
+			</Polygon>
+		</Placemark>
+		

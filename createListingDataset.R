@@ -3,19 +3,17 @@ library(foreign)
 library(dplyr)
 
 wd <- "~/Dropbox/CROP/Indonesia/CropIndo"
+dd <- "~/Dropbox/CROP/Indonesia/"
 setwd(wd)
 
-#create list of data.files
-# data.dir = "~/Dropbox/CROP/cropIndo/simulated_data"
-
+##---GET DATA FILES
 data.files <- list.files(pattern = ".tab", 
-                       paste0(wd,"/simulated_data","/"))
+                       paste0(dd,"/simulated_data","/"))
 
-data.files <- paste0(wd,"/simulated_data","/",data.files)
+data.files <- paste0(dd,"/simulated_data","/",data.files)
 
-##################
-## PARTICULARS  ##
-##################
+
+##-----PARTICULARS  
 id <- grep(pattern = "Agricultural Household",
            ignore.case = TRUE,
            data.files)
@@ -29,10 +27,8 @@ id.df <- read.table(data.files[id],
 
 id.df <- rename(id.df, physicalBuildingId = Id)
 
-###########################
-##    CENSUS BUILDINGS   ##
-###########################
 
+##------CENSUS BUILDINGS
 id.census <- grep(pattern = "census",
                   ignore.case = TRUE,
                   data.files)
@@ -53,9 +49,8 @@ if("num_hh_census" %in% colnames(census.df)){
 
 master <- merge(x = id.df,y = census.df, by = "physicalBuildingId")
 
-##########################
-## HOUSEHOLDS ROSTER    ##
-##########################
+
+##----- HOUSEHOLDS ROSTER  
 id.hh <- grep(pattern = "hh",
                   ignore.case = TRUE,
                   data.files)
@@ -70,34 +65,26 @@ hh.df <- read.table(data.files[id.hh],
 hh.df <- rename(hh.df,physicalBuildingId = ParentId2)
 
 
-# temp <- select(master,physicalBuildingId,nu_census_buildings2,censusBuildingId, num_hh)
-# temp2 <- select(hh.df,physicalBuildingId,Id, ParentId1)
-# 
-# temp
-# temp2
-
 hh.df <- rename(hh.df,censusBuildingId = ParentId1)
 hh.df <- rename(hh.df, houseHoldId = Id)
 master <- merge(master,hh.df, by = c("physicalBuildingId","censusBuildingId"))
+
+##----Put columns in order: phyiscalBuildingId,censusBuildingId, HouseholdId
+colnames(master)
+master <- cbind(master[,1:2],master[,15],master[,3:length(master)])
 head(master)
 
 
-#################################
-## ADD POLYGON CODE TO DATASET ##
-#################################
-#######################################################################################
-###### GENERATE SOME RANDOM CODES
-#x <- as.character(codes$census_block)
-#master$census_block <- sample(x,nrow(master), replace = TRUE)
+##----MERGE IN POLYGON CODES
 
-#merge polygon codes w/ dataset
-codes <- read.csv("config/hh_to_poly.csv")
-codes <- select(codes, sub_dist_name2,census_block,polygon_code)
-master$temp <- paste0(master$sub_dist_name2,master$census_block)
-codes$temp <- paste0(codes$sub_dist_name2,codes$census_block)
-
-master <- merge(master, codes, by = "temp")
-head(master[,-c("sub_dist_name2.y")])
+#merge polygon codes w/ datasetA
+# codes <- read.csv("config/hh_to_poly.csv")
+# codes <- select(codes, sub_dist_name2,census_block,polygon_code)
+# master$temp <- paste0(master$sub_dist_name2,master$census_block)
+# codes$temp <- paste0(codes$sub_dist_name2,codes$census_block)
+# 
+# master <- merge(master, codes, by = "temp")
+# head(master[,-c("sub_dist_name2.y")])
 
 
 

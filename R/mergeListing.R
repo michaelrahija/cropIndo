@@ -9,14 +9,14 @@
 ##'
 ##' @export
 
-mergeListing <- function(dd = "~/Dropbox/CROP/Indonesia"){
+mergeListing <- function(dd = "~/Dropbox/CROP/Indonesia/"){
   
   
   ##---GET DATA FILES
   data.files <- list.files(pattern = ".tab", 
-                           paste0(dd,"/listing_data/"))
+                           paste0(dd,"listing_data/"))
   
-  data.files <- paste0(dd,"/listing_data/",data.files)
+  data.files <- paste0(dd,"listing_data/",data.files)
   
   
   ##-----PARTICULARS  
@@ -32,7 +32,7 @@ mergeListing <- function(dd = "~/Dropbox/CROP/Indonesia"){
                       stringsAsFactors = FALSE)
   
   
-  id.df <- rename(id.df, physicalBuildingId= Id)
+  names(id.df)[names(id.df)=="Id"] <- "physicalBuildingId"
   
   ##------CENSUS BUILDINGS
   id.census <- grep(pattern = "census",
@@ -46,8 +46,12 @@ mergeListing <- function(dd = "~/Dropbox/CROP/Indonesia"){
                           header = TRUE,
                           stringsAsFactors = FALSE)                                             
   
-  census.df = rename(census.df, censusBuildingId = Id)
-  census.df = rename(census.df, physicalBuildingId = ParentId1 )
+  #census.df = rename(census.df, censusBuildingId = Id)
+  names(census.df)[names(census.df)=="Id"] <- "censusBuildingId"
+  #census.df = rename(census.df, physicalBuildingId = ParentId1 )
+  names(census.df)[names(census.df)=="ParentId1"] <- "physicalBuildingId"
+  
+  
   if("num_hh_census" %in% colnames(census.df)){
     census.df <- rename(census.df, num_hh = num_hh_census)
   }
@@ -68,11 +72,16 @@ mergeListing <- function(dd = "~/Dropbox/CROP/Indonesia"){
                       header = TRUE,
                       stringsAsFactors = FALSE) 
   
-  hh.df <- rename(hh.df,physicalBuildingId = ParentId2)
+#   hh.df <- rename(hh.df,physicalBuildingId = ParentId2)
+#   hh.df <- rename(hh.df,censusBuildingId = ParentId1)
+#   hh.df <- rename(hh.df, houseHoldId = Id)
+    names(hh.df)[names(hh.df)=="ParentId2"] <- "physicalBuildingId"
+    names(hh.df)[names(hh.df)=="ParentId1"] <- "censusBuildingId"
+    names(hh.df)[names(hh.df)=="Id"] <- "houseHoldId"
   
   
-  hh.df <- rename(hh.df,censusBuildingId = ParentId1)
-  hh.df <- rename(hh.df, houseHoldId = Id)
+  
+  
   master <- merge(master,hh.df, by = c("physicalBuildingId","censusBuildingId"))
 
 master                    

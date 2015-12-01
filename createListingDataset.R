@@ -8,9 +8,9 @@ setwd(wd)
 
 ##---GET DATA FILES
 data.files <- list.files(pattern = ".tab", 
-                       paste0(dd,"/simulated_data","/"))
+                       paste0(dd,"/listing_data","/"))
 
-data.files <- paste0(dd,"/simulated_data","/",data.files)
+data.files <- paste0(dd,"/listing_data","/",data.files)
 
 
 ##-----PARTICULARS  
@@ -74,6 +74,16 @@ colnames(master)
 master <- cbind(master[,1:2],master[,15],master[,3:length(master)])
 head(master)
 
+##---
+colnames(master)
+nrow(master)
+temp <- master %>%
+          group_by(num_hh) %>%
+          summarize(n())
+
+master %>%
+  group_by(dist_name2) %>%
+  summarize(hh = length(unique(physicalBuildingId)))
 
 ##----MERGE IN POLYGON CODES
 

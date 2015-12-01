@@ -45,6 +45,37 @@ labelFactors <- function(df = data, vars = "sub_dist_name2"){
     print("label added for sub_dist_name2")
   }
   
+  if("census_block" %in% vars){
+    labels <- c("015B",
+                "008B",
+                "011B",
+                "014B",
+                "001B",
+                "008B",
+                "007B",
+                "015B",
+                "007B",
+                "003B",
+                "008B",
+                "049B",
+                "005B",
+                "018B",
+                "009B",
+                "030B",
+                "003B",
+                "004B",
+                "008B",
+                "001B")
+    
+    values <- 1:20
+    
+    temp.cb <- data.frame(censusBlockLabels = labels, census_block = as.integer(values))
+  
+    temp <- merge(temp,temp.cb, by = "census_block") #will need to adjust this code! b/c temp might not exist!
+    
+    print("label added for census_block")
+  }
+  
 temp  
   
   

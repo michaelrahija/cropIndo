@@ -21,7 +21,7 @@ library(ggmap)
 sys <- Sys.info()
 if(sys[5] == "x86_64"){
     wdir = "~/Dropbox/CROP/Indonesia/cropIndo" #Mac
-    mdir = "~/Dropbox/CROP/Indonesia/simulated_data"
+    dd = "~/Dropbox/CROP/Indonesia/listing_data/"
     hhdir = "~/Dropbox/CROP/Indonesia/hh_coordinates"
     sdir = "~/Dropbox/CROP/Indonesia/shape_files"
   } else {
@@ -32,14 +32,15 @@ if(sys[5] == "x86_64"){
   #set working directory
   setwd(wdir)
 
-  #ID village files
-  files = list.files(mdir, pattern = "actions")
+  #ID actions files
+  files = list.files(dd, pattern = "actions")
 
   data.list <- list()
 
-  #Accumulate village data in a list
+  #Accumulate actions data in a list
   for (i in 1:length(files)){
-    data.temp <- read.delim(paste0(mdir,"/",files[i]), header = TRUE)
+    data.temp <- read.delim(paste0(dd,"/",files[i]), header = TRUE,
+                            stringsAsFactors = FALSE)
   
     data.list[[i]] <- data.temp 
   }
@@ -59,16 +60,16 @@ if(sys[5] == "x86_64"){
 
 ```
 
-# Total physical structures listed
+# Total number of interviews submitted
 ```{r, echo=FALSE,fig.pos="placeHere"}
 source("R/interview_table.R")
+
 x <- interview_table(data)
 x <- x[,1:(length(x)-1)]
 length(x[,1])
 ```
 
-
-# Team Summary Plot
+# Enumerator summary plot
 ```{r, echo=FALSE,fig.pos="placeHere"}
 tab <- x %>%
       group_by(Interviewer) %>% 
@@ -85,79 +86,96 @@ ggplot(tab, aes(x = Interviewer, y = interviews))+
 ```
 
 
-# Interview Table 
-## Please remember to add 3 hours to start and end times as it is recorded in UTC time zone.
+
+# Listings
 ```{r, echo=FALSE,fig.pos="placeHere"}
-source("R/interview_table.R")
-x <- interview_table(data)
-x <- x[,1:(length(x)-1)]
-knitr::kable(x,row.names = FALSE)
+source("R/mergeListing.R")
+data <- mergeListing(dd = "~/Dropbox/CROP/Indonesia/")
+
+##-- apply factor labels
+source("R/labelFactors.R")
+data <- labelFactors(df = data, 
+                     vars = c("sub_dist_name2","census_block"))
+
+
+
+# tab <- data %>% 
+#   group_by(subDistrictNames, censusBlockLabels) %>% 
+#   summarize(Interviews = nrows(physicalBuildingId))
+
+data$subDistrictNames <- as.character(data$subDistrictNames)
+
+tab <- data %>% 
+  group_by(subDistrictNames, censusBlockLabels) %>% 
+  summarize(length(physicalBuildingId))
+
+
+knitr::kable(tab)
+
 ```
 
-# Suspicious interviews
-## Below is a list of interviews whose duration is more than 1 standard deviation from the mean
 
 
-# Code for map creation
 ```{r, echo=FALSE, message = FALSE, warning= FALSE, fig.height = 4, fig.width = 8, fig.cap = "Interview Locations", fig.pos="placeHere"}
-
-##The idea here is to create a map for each census block showing listed physical structures
-## Will need to figure out how to call map from ggmpa using the center of a polygon instead
-## of a country
-
-#get all georeferences
-geo <- list.files(mdir, pattern = "Household")
-test <- grepl(".tab",geo)
-geo <- geo[test]
-
-geo.list <- list()
-
-for (i in 1:length(geo)){
-    geo.temp <- read.delim(paste0(mdir,"/",geo[i]), header = TRUE)
-  
-    geo.list[[i]] <- geo.temp 
-  }
-
-#Merge list into one data frame
-geo<- do.call("rbind", geo.list)
-
-#keep only unique rows incase of duplicate
-geo <- unique(geo)
-
-#get ids
-
-ids <- list.files(hhdir)
-#ids <- gsub(".csv","",ids)
-
-#read in polygon
-# polys <- list.files(sdir) %in% ids  
-# polys <- list.files(sdir)[polys]
-m <- list()
-
-for (i in 1:length(ids)){
-  poly <- read.csv(paste0(sdir,"/",ids[i]))
-  colnames(poly) <- c("lon","lat")
-
-  #read in hh
-  hh <- read.csv(paste0(hhdir,"/",ids[i]))
-  colnames(hh) <- c("lat","lon", "farmer_name")
-
-  #Get map, will need center. Could take the average lat, and long of the hh         coordinates to automate!
-  test2 <- get_map(location = c(lon = mean(hh$lon), lat = mean(hh$lat)), zoom = 15) 
-  test3 <- ggmap(test2)
-
-
-
-  #add households and polygon to map
-  m <- test3 + geom_polygon(aes(x=lon, y=lat), fill='grey', size=.6,color='red', data=poly, alpha=0)
-  m <- m + geom_point(data = hh, aes(x = lon, y = lat, fill = "red", alpha = 0.8), size = 1, shape = 21, color = "red")
-  m <- m + guides(fill=FALSE, alpha=FALSE, size=FALSE) 
-  m <- m + labs(x = "longitude", y = "latitude", main = "Map of Interviews") 
-  m <- m + ggtitle(paste0(gsub(".csv","",ids[i])))
-  print(m)
-  #m[i] <- m
-}
-
+# Code for map creation
+# 
+# ##The idea here is to create a map for each census block showing listed physical structures
+# ## Will need to figure out how to call map from ggmpa using the center of a polygon instead
+# ## of a country
+# 
+# #get all georeferences
+# geo <- list.files(mdir, pattern = "Household")
+# test <- grepl(".tab",geo)
+# geo <- geo[test]
+# 
+# geo.list <- list()
+# 
+# for (i in 1:length(geo)){
+#     geo.temp <- read.delim(paste0(mdir,"/",geo[i]), header = TRUE)
+#   
+#     geo.list[[i]] <- geo.temp 
+#   }
+# 
+# #Merge list into one data frame
+# geo<- do.call("rbind", geo.list)
+# 
+# #keep only unique rows incase of duplicate
+# geo <- unique(geo)
+# 
+# #get ids
+# 
+# ids <- list.files(hhdir)
+# #ids <- gsub(".csv","",ids)
+# 
+# #read in polygon
+# # polys <- list.files(sdir) %in% ids  
+# # polys <- list.files(sdir)[polys]
+# m <- list()
+# 
+# for (i in 1:length(ids)){
+#   poly <- read.csv(paste0(sdir,"/",ids[i]))
+#   colnames(poly) <- c("lon","lat")
+# 
+#   #read in hh
+#   hh <- read.csv(paste0(hhdir,"/",ids[i]))
+#   colnames(hh) <- c("lat","lon", "farmer_name")
+# 
+#   #Get map, will need center. Could take the average lat, and long of the hh         coordinates to automate!
+#   test2 <- get_map(location = c(lon = mean(hh$lon), lat = mean(hh$lat)), zoom = 15) 
+#   test3 <- ggmap(test2)
+# 
+# 
+# 
+#   #add households and polygon to map
+#   m <- test3 + geom_polygon(aes(x=lon, y=lat), fill='grey', size=.6,color='red', data=poly, alpha=0)
+#   m <- m + geom_point(data = hh, aes(x = lon, y = lat, fill = "red", alpha = 0.8), size = 1, shape = 21, color = "red")
+#   m <- m + guides(fill=FALSE, alpha=FALSE, size=FALSE) 
+#   m <- m + labs(x = "longitude", y = "latitude", main = "Map of Interviews") 
+#   m <- m + ggtitle(paste0(gsub(".csv","",ids[i])))
+#   print(m)
+#   #m[i] <- m
+# }
+# 
 
      
 ```

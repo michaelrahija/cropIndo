@@ -42,7 +42,7 @@ labelFactors <- function(df = data, vars = "sub_dist_name2"){
     temp <- merge(district.df,df, by = "sub_dist_name2", all = TRUE)
     
     
-    print("label added for sub_dist_name2")
+    #print("label added for sub_dist_name2")
   }
   
   if("census_block" %in% vars){
@@ -73,7 +73,7 @@ labelFactors <- function(df = data, vars = "sub_dist_name2"){
   
     temp <- merge(temp,temp.cb, by = "census_block") #will need to adjust this code! b/c temp might not exist!
     
-    print("label added for census_block")
+    #print("label added for census_block")
   }
   
 temp  

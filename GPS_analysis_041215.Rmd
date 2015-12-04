@@ -1,0 +1,102 @@
+---
+title: "Analyze GPS 4th day"
+author: "Michael Rahija"
+date: "`r format(Sys.time(),'%B %d , %Y')`"
+output: pdf_document
+---
+
+
+```{r, echo = FALSE, warning = FALSE, cache = FALSE, include = FALSE}
+library(dplyr)
+library(reshape)
+library(xlsx)
+library(ggplot2)
+library(ggmap)
+
+#Set working directory
+sys <- Sys.info()
+if(sys[5] == "x86_64"){
+    wdir = "~/Dropbox/CROP/Indonesia/cropIndo" #Mac
+    dd = "~/Dropbox/CROP/Indonesia/listing_data/"
+    hhdir = "~/Dropbox/CROP/Indonesia/hh_coordinates"
+    sdir = "~/Dropbox/CROP/Indonesia/shape_files"
+  } else {
+    wdir = "C:/Users/rahija/Dropbox/Tanzania_Vet_Services_Project/Live_data_collection/Metadata_reporting/program"
+    mdir = "C:/Users/rahija/Dropbox/Tanzania_Vet_Services_Project/Live_data_collection/"
+  }
+
+#set working directory
+setwd(wdir)
+
+
+```
+
+
+```{r, message = FALSE}
+source("R/mergeListing.R")
+data <- mergeListing(dd = "~/Dropbox/CROP/Indonesia/")
+
+gps1 <- data.frame(gps = data$gps1_Accuracy, 
+                   measure = rep("measure1",n = nrow(data$gps1_Accuracy)))
+gps2 <- data.frame(gps = data$gps2_Accuracy, 
+                   measure = rep("measure2",n = nrow(data$gps2_Accuracy)))
+
+gps <- rbind(gps1,gps2)
+
+
+ggplot(gps,aes(x=gps)) + 
+    geom_histogram(data=subset(gps,measure == 'measure1'),fill = "red", alpha = 0.2) +
+    geom_histogram(data=subset(gps,measure == 'measure2'),fill = "green", alpha = 0.2)
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+source("R/labelFactors.R")
+data <- labelFactors(df = data, 
+                     vars = c("sub_dist_name2","census_block"))
+
+#take most accurate gps reading from each survey
+if(data$gps1_Accuracy > data$gps2_Accuracy){
+  data$gps_Accuracy <- data$gps2_Accuracy
+} else {
+  data$gps_Accuracy <- data$gps1_Accuracy
+  }
+
+ggplot(data, aes(gps_Accuracy)) + 
+  geom_histogram(aes(y = ..density..)) + 
+  facet_grid(censusBlockLabels~subDistrictNames)
+```
+
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+#ID actions files
+  files = list.files(dd, pattern = "actions")
+
+  data.list <- list()
+
+  #Accumulate actions data in a list
+  for (i in 1:length(files)){
+    data.temp <- read.delim(paste0(dd,"/",files[i]), header = TRUE,
+                            stringsAsFactors = FALSE)
+  
+    data.list[[i]] <- data.temp 
+  }
+
+  #Merge list into one data frame
+  datai <- do.call("rbind", data.list)
+  datai <- unique(datai)
+  
+  datai <- filter(datai, Action == "FirstAnswerSet")
+  datai <- select(datai,InterviewId,Originator)
+  colnames(datai) <- c("physicalBuildingId","Enumerator")
+  
+  temp <- merge(data,datai, by = "physicalBuildingId")
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(temp, aes(gps_Accuracy)) + 
+  geom_histogram(aes(y = ..density..)) + 
+  facet_wrap(Enumerator~subDistrictNames)
+
+```

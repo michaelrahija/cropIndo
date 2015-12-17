@@ -94,8 +94,8 @@ interview_table <- function(x){
     master$Duration[test] <- "ERROR"
     
     ##Take only last 5 characters of ID
-    source("R/extractRight.R")
-    master[,1] <- extractRight(master[,1],n = 5)
+#     source("R/extractRight.R")
+#     master[,1] <- extractRight(master[,1],n = 5)
     
     
 master

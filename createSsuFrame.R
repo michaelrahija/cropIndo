@@ -26,12 +26,17 @@ setwd(wdir)
 source("R/mergeListing.R")
 data <- mergeListing(dd = "~/Dropbox/CROP/Indonesia/")
 
-##-- apply factor labels
+##-- merge names of census blocks and subdistricts
 source("R/labelFactors.R")
 data <- labelFactors(df = data, 
                      vars = c("sub_dist_name2","census_block"))
 
 data <- select(data, -c(sub_dist_name2,census_block))
+
+##-- remove columns that have all NA values
+test <- sapply(data, function(x)  sum(!is.na(x)))
+test <- test == 0 
+data <- data[,!test]
 
 
 ##--only keep most accurate GPS
@@ -55,31 +60,25 @@ data <- select(data, -c(gps2_Latitude,gps2_Longitude,gps2_Accuracy,
                         gps1_Latitude,gps1_Longitude,gps1_Accuracy,
                         gps1_Altitude,gps1_Timestamp))
 
-##--clean-up hh_crop
-if(sum(!is.na(data$hh_crop_5)) == 0) data <- select(data,-hh_crop_5)
-if(sum(!is.na(data$hh_crop_6)) == 0) data <- select(data,-hh_crop_6)
-if(sum(!is.na(data$hh_crop_7)) == 0) data <- select(data,-hh_crop_7)
+##---- clean-up hh_crop
 
-#create labels 
-
+#replace values w/ labels
 labels <- c("weltlandPaddy","drylandPaddy","Maize",
             "soybean","groundnut","mungbean","cassava",
             "sweatPotato")
 
-#id crop columns
-cropCols <- grep("hh_crop",colnames(data))
+cropCols <- grep("hh_crop",colnames(data)) #grab indices of crop columns
 
 
 #outer loop for crop columns
 for(col in cropCols){
   
-  #inner loops for to replace values w/ labels for crops
+  #inner loop to replace values w/ labels for crops
   for(i in 1:length(labels)){
     data[,col] <- replace(data[,col], #the vector 
                           grepl(i,data[,col]), #find the rows w/ specific value
                           labels[i]) #replace the value w/ label using index
   
     }  
-  
 }
 

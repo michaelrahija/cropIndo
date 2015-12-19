@@ -71,10 +71,11 @@ labelFactors <- function(df = data, vars = "sub_dist_name2"){
     
     temp.cb <- data.frame(censusBlockLabels = labels, census_block = as.integer(values))
   
-    temp <- merge(temp,temp.cb, by = "census_block") #will need to adjust this code! b/c temp might not exist!
+    temp <- merge(temp,temp.cb, by = "census_block", all = TRUE) #will need to adjust this code! b/c temp might not exist!
     
     #print("label added for census_block")
   }
+  
   
 temp  
   

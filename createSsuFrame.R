@@ -1,4 +1,4 @@
-#checks and building SSU frame building
+#cleaning and building SSU frame building
 
 #---Import data
 library(dplyr)
@@ -11,7 +11,7 @@ library(ggplot2)
 sys <- Sys.info()
 if(sys[5] == "x86_64"){
   wdir = "~/Dropbox/CROP/Indonesia/cropIndo" #Mac
-  dd = "~/Dropbox/CROP/Indonesia/listing_data_stata/"
+  dd = "~/Dropbox/CROP/Indonesia/listing_data/"
   hhdir = "~/Dropbox/CROP/Indonesia/hh_coordinates"
   sdir = "~/Dropbox/CROP/Indonesia/shape_files"
 } else {
@@ -127,7 +127,108 @@ for(cols in wetlCols){
 
 
 ##--CLEAN UP DRYLAND PADDY
+drylCols <- grep("drylandpaddy_trigger",colnames(data))
+labels <- c("pure dryland paddy","mixed dryland paddy")
 
+for(cols in drylCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = 1:2,
+                        labels = labels)
+}
+
+#label months
+drylCols <- grep("drylandpaddy_[0-9]",colnames(data))
+for(cols in drylCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = c(1,2,3,4,12),
+                        labels = labels_months)
+}
+
+##--CLEAN UP MAIZE
+maizeCols <- grep("maize_trigger", colnames(data))
+labels = c('maize pure crop, hybrid',
+           'maize pure crop, composite',
+           'maize pure crop, local',
+           'maize mixed crop, hybrid',
+           'maize mixed crop, composite',
+           'maize mixed crop, local')
+
+levels <- 1:6
+
+for(cols in maizeCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = levels,
+                        labels = labels)
+}
+
+#label months
+maizeCols <- grep("maize_[0-9]",colnames(data))
+for(cols in maizeCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = c(1,2,3,4,12),
+                        labels = labels_months)
+}
+
+##-- CLEAN UP SOYBEAN
+soyCols <- grep("soybean_trigger", colnames(data))
+labels = c('soybean pure crop',
+           'soybean mixed crop')
+
+levels <- 1:2
+
+for(cols in soyCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = levels,
+                        labels = labels)
+}
+
+#label months
+soyCols <- grep("soybean_[0-9]",colnames(data))
+for(cols in soyCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = c(1,2,3,4,12),
+                        labels = labels_months)
+}
+
+#--CLEAN UP GROUNDNUT, MUNGBEAN,CASSAVA, SWEETPOTATO
+multCols <- c("groundnut_month", "mungbean_month", "cassava_month", 
+          "sweetpotato_month")
+multCols <- colnames(data) %in% multCols
+multCols <- grep("TRUE",multCols)
+
+for(cols in multCols){
+  data[,cols] <- factor(data[,cols],
+                        levels = c(1,2,3,4,12),
+                        labels = labels_months)
+}
+
+##--arrange columns
+data.temp <- select(data,
+               dist_name2,
+               subDistrictNames,
+               censusBlockLabels,
+               sample_code,
+               physicalBuildingId,
+               censusBuildingId,
+               houseHoldId,
+               lat,
+               lon,
+               altitude,
+               accuracy,
+               ts,
+               hh_head_name,
+               hh_food_crop,
+               hh_harvest)
+
+
+#add crop columns on the end
+colsAdd <- colnames(data) %in% colnames(data.temp)               
+colsAdd <- grep("FALSE", colsAdd)
+
+master <- cbind(data.temp, data[,colsAdd])
+
+#remove random number column
+master <- select(master, - ssSys_IRnd)
 
 
 

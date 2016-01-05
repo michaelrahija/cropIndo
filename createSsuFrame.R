@@ -230,6 +230,10 @@ master <- cbind(data.temp, data[,colsAdd])
 #remove random number column
 master <- select(master, - ssSys_IRnd)
 
+write.csv(master,
+          file = paste0(dd, "/ssu_frame.csv"), 
+          row.names = FALSE)
+
 
 
 

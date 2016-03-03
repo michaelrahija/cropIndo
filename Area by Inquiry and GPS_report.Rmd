@@ -7,7 +7,7 @@ output: pdf_document
 
 # Details of Sample in Gunung Kidul
 
-```{r, echo = FALSE, message = FALSE, include = FALSE}
+```{r, echo = FALSE, message = FALSE, include = FALSE, fig_width = 5, fig.height= 3}
 #---Import data
 library(dplyr)
 library(ggplot2)
@@ -48,9 +48,9 @@ The total number of households surveyed was `r nrow(df)`. These households owned
  
 The number of households sampled to receive both farmer inquiry and gps area measures were  `r nrow(filter(df, subsample_no == 2))`.
 
-The histogram has a comparision in the distribution of parcel sizes comparing area measure with GPS (area_gps1, area_gps2), and farmer inquiry (area_inquiry). The distribution for area_inquiry seems to be slightly to the right and infact the mean of the farmer inquiry variable is slightly to the right.
+The density plot below shows the distribution of parcel sizes comparing area measure with GPS (area_gps1, area_gps2), and farmer inquiry (area_inquiry). The vertical line indicate the means of the distributions. The distribution for area_inquiry is slightly to the right of the gps area distributions and the mean of the farmer inquiry variable is slightly to the right signaling a positive biase.
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, fig_width = 5, fig.height= 3}
 ##---Take parcel roster
 id <- grepl(dd.files, pattern = "parcel_roster")
 
@@ -80,25 +80,25 @@ ggplot(gps.long, aes(x = size, fill = measure)) +
        geom_density(alpha = .3) +
        ggtitle(paste0("Number of parcels = ", ... =   length(unique(gps.long$parcelno)))) +
   geom_vline(data = cdat, aes(xintercept = size.mean, color = measure),
-              size = 1)     +
-  annotate("text", label = "Averages of distributions", y = .0011, x = 4000, 
-           color = "red") 
+               size = 1)     #+
+#   annotate("text", label = "Means", y = .0011, x = 4000, 
+#            color = "red") 
 
 ```
 
-The dispersion of the farmer inquiry variable is wider than the GPS measures. 
+The range of plot sizes provided by farmer inquiry is larger than the gps area measure. However, it seems for smaller plots, the variation in plot size given by gps measure is higher than farmer inquiry. 
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, fig_width = 3, fig.height= 2}
 ggplot(gps.long, aes(factor(measure), size, fill = factor(measure))) +
   geom_violin()
     
 ```
 
-# Relationship between farmer inquiry and average gps measure
+# Comparision: farmer inquiry, gps measure, and percent difference
 
 There is strong positive correlation between the average gps area measure and results from farmer inquiry. 
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, , fig_width = 3, fig.height= 3}
 gps$gpsAvg <- (gps$area_gps1 + gps$area_gps2)/2
 gps$diff <- abs(gps$area_inquiry - gps$gpsAvg)
 gps$perDiff <- abs(gps$diff/((gps$area_inquiry + gps$gpsAvg)/2))
@@ -115,7 +115,7 @@ ggplot(gps, aes(x = area_inquiry, y = gpsAvg)) +
   ylim(0,5000) +
   xlim(0,5000) +
   geom_smooth(method=lm, formula=y~x) +
-  annotate("text", label = paste0("Coeff = ",format(round(model$coefficients,2)), " ,","\n",
+  annotate("text", label = paste0("Coeff = ",format(round(model$coefficients[[2]],2)), " ,","\n",
                                   "R-squared = ",format(round(summary(model)$r.squared,2)) ), 
                     y = 2500, x = 4000,color = "blue", size= 3)
 ```
@@ -123,7 +123,7 @@ ggplot(gps, aes(x = area_inquiry, y = gpsAvg)) +
 The *percentage difference* between the average gps measure, and area given by farmer inquiry was computed. The graph below signals that there is a slight negative relationship. In other words, as the plot size increases, the percentage difference between the gps area measure and the area obtained through farmer inquiry decreases.
 
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE,, fig_width = 3, fig.height= 3}
 ggplot(gps, aes(x= area_inquiry, y = perDiff)) +
          geom_point() +
          geom_smooth(method = lm) +
@@ -131,62 +131,10 @@ ggplot(gps, aes(x= area_inquiry, y = perDiff)) +
          xlab("Area given by farmer inquiry")
 ```
 
-Since 90% of the plots are less than 2500 meters, let's compare the distributions of the three methods for just these smaller plots. 
+## Preliminary conclusions
 
-# Distribution of plot sizes less than 2500 meters
-The vertical lines show the means of the distributions. There seems to be slight upward biase for with the farmer inquiry method.
+* On average, there is a slight upward biase in area measurement collected by farmer inquiry compared with gps. 
 
-Also, the violen chart indicates that the disbursion of measurements taken with the gps unit is much wider than famrer inquiry.
+* There is a slight negative relationship between the plot size and percentage difference between the gps and farmer inquiry method.
 
-```{r, echo = FALSE, message = FALSE}
-gps.long <- filter(gps.long, size < 2500)
-
-
-cdat <- ddply(gps.long, "measure",summarise, size.mean = mean(size))
-
-ggplot(gps.long, aes(x = size, fill = measure)) +
-   geom_density(alpha = .3) +
-   geom_vline(data = cdat, aes(xintercept = size.mean, color = measure),
-              size = 1)     +
-  annotate("text", label = "Averages of distributions", y = .0011, x = 1100, 
-           color = "red") +
-  ggtitle(paste0("Number of parcels = ", length(unique(gps.long$parcelno))))
-
-
-ggplot(gps.long, aes(factor(measure), size, fill = factor(measure))) +
-  geom_violin()
-    
-```
-
-
-# Compare average of gps measures to farmer inquiry
-```{r, echo = FALSE, message = FALSE}
-gps$avg_gps <- (gps$area_gps1 + gps$area_gps2)/2
-
-ggplot(gps, aes(x = area_inquiry, y = avg_gps)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1)
-
-```
-
-# Difference analysis
-```{r, echo = FALSE, message = FALSE}
-gps$gpsAvg <- (gps$area_gps1 + gps$area_gps2)/2
-gps$diff <- abs(gps$area_inquiry - gps$gpsAvg)
-gps$perDiff <- abs(gps$diff/((gps$area_inquiry + gps$gpsAvg)/2))
-ggplot(gps, aes(x= perDiff, y = area_inquiry)) +
-         geom_point()
-
-gps.trunc <- filter(gps, area_inquiry < 14000)
-ggplot(gps.trunc, aes(x= perDiff, y = area_inquiry)) +
-         geom_point()+
-         geom_smooth()
-
-ggplot(gps.trunc, aes(x= gpsAvg, y = perDiff)) +
-         geom_point()+
-         geom_smooth(method = "lm")
-
-```
-
-
-###Create graph w/ avgGps and inquiry, run regression line w/ intercept of zero. Then test slope if line is significantly different from 1. 
+* The variation in plot area for small plots is higher using gps than farmer inquiry. 
